@@ -1,0 +1,111 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(uid) {
+      return isAuthenticated() && request.auth.uid == uid;
+    }
+    
+    function isDocOwner() {
+      return isAuthenticated() && request.auth.uid == resource.data.uid;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+          (request.auth.token.email == "aquinogomes2478@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    function isValidString(field, min, max) {
+      return request.resource.data[field] is string && 
+             request.resource.data[field].size() >= min && 
+             request.resource.data[field].size() <= max;
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+    
+    function isValidAcademicWork(data) {
+      return hasRequiredFields(['uid', 'title', 'type', 'summary', 'createdAt']) &&
+             data.uid == request.auth.uid &&
+             data.title is string && data.title.size() > 0 && data.title.size() < 200 &&
+             data.type in ['TCC', 'Monografia', 'Artigo', 'Texto'] &&
+             data.summary is string && data.summary.size() < 5000;
+    }
+
+    function isValidPoem(data) {
+      return hasRequiredFields(['uid', 'title', 'content', 'createdAt']) &&
+             data.uid == request.auth.uid &&
+             data.title is string && data.title.size() > 0 && data.title.size() < 200 &&
+             data.content is string && data.content.size() < 10000;
+    }
+
+    function isValidStudyEvent(data) {
+      return hasRequiredFields(['uid', 'title', 'date', 'type', 'createdAt']) &&
+             data.uid == request.auth.uid &&
+             data.title is string && data.title.size() > 0 && data.title.size() < 200 &&
+             data.type in ['Prova', 'Trabalho', 'Estudo', 'Lembrete'];
+    }
+
+    function isValidBook(data) {
+      return hasRequiredFields(['uid', 'title', 'author', 'type', 'createdAt']) &&
+             data.uid == request.auth.uid &&
+             data.title is string && data.title.size() > 0 && data.title.size() < 200 &&
+             data.author is string && data.author.size() > 0 &&
+             data.type in ['Famoso', 'Autônomo'];
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /users/{uid} {
+      allow read: if isAuthenticated();
+      allow create: if isOwner(uid) && hasRequiredFields(['uid', 'email']);
+      allow update: if isOwner(uid) && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['role']) || isAdmin());
+    }
+
+    match /books/{bookId} {
+      allow read: if isDocOwner() || isAdmin();
+      allow create: if isAuthenticated() && isValidBook(request.resource.data);
+      allow update: if isDocOwner() && isValidBook(request.resource.data);
+      allow delete: if isDocOwner() || isAdmin();
+    }
+
+    match /academicWorks/{workId} {
+      allow read: if isDocOwner() || isAdmin();
+      allow create: if isAuthenticated() && isValidAcademicWork(request.resource.data);
+      allow update: if isDocOwner() && isValidAcademicWork(request.resource.data);
+      allow delete: if isDocOwner() || isAdmin();
+    }
+
+    match /poems/{poemId} {
+      allow read: if isDocOwner() || isAdmin();
+      allow create: if isAuthenticated() && isValidPoem(request.resource.data);
+      allow update: if isDocOwner() && isValidPoem(request.resource.data);
+      allow delete: if isDocOwner() || isAdmin();
+    }
+
+    match /studyEvents/{eventId} {
+      allow read: if isDocOwner() || isAdmin();
+      allow create: if isAuthenticated() && isValidStudyEvent(request.resource.data);
+      allow update: if isDocOwner() && isValidStudyEvent(request.resource.data);
+      allow delete: if isDocOwner() || isAdmin();
+    }
+  }
+}

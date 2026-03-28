@@ -1,0 +1,97 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "User Profile",
+      "description": "User profile information",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "displayName": { "type": "string" },
+        "email": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "whatsapp": { "type": "string" },
+        "instagram": { "type": "string" },
+        "linkedin": { "type": "string" },
+        "bio": { "type": "string" }
+      },
+      "required": ["uid", "email"]
+    },
+    "Book": {
+      "title": "Book",
+      "description": "Academic books",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "title": { "type": "string" },
+        "author": { "type": "string" },
+        "type": { "type": "string", "enum": ["Famoso", "Autônomo"] },
+        "description": { "type": "string" },
+        "coverUrl": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "title", "author", "type"]
+    },
+    "AcademicWork": {
+      "title": "Academic Work",
+      "description": "Academic works like TCC, articles, etc.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "title": { "type": "string" },
+        "type": { "type": "string", "enum": ["TCC", "Monografia", "Artigo", "Texto"] },
+        "summary": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "title", "type"]
+    },
+    "Poem": {
+      "title": "Poem",
+      "description": "User created poems and verses",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "title", "content"]
+    },
+    "StudyEvent": {
+      "title": "Study Event",
+      "description": "Calendar events, exams, and reminders",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "date": { "type": "string", "format": "date" },
+        "time": { "type": "string" },
+        "type": { "type": "string", "enum": ["Prova", "Trabalho", "Estudo", "Lembrete"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "title", "date", "type"]
+    }
+  },
+  "firestore": {
+    "/users/{uid}": {
+      "schema": "UserProfile",
+      "description": "User profile documents"
+    },
+    "/academicWorks/{workId}": {
+      "schema": "AcademicWork",
+      "description": "Academic work documents"
+    },
+    "/poems/{poemId}": {
+      "schema": "Poem",
+      "description": "Poem documents"
+    },
+    "/studyEvents/{eventId}": {
+      "schema": "StudyEvent",
+      "description": "Study event documents"
+    },
+    "/books/{bookId}": {
+      "schema": "Book",
+      "description": "Book documents"
+    }
+  }
+}
